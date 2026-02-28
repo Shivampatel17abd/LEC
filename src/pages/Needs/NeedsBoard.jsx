@@ -43,7 +43,7 @@ const NeedsBoard = () => {
         {/* Left: Filters & Analytics */}
         <div className="space-y-6">
           <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="font-bold mb-4 text-gray-800">📦 Demand Heatmap</h3>
+            <h3 className="font-bold mb-4 text-gray-800"> Demand Heatmap</h3>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Trending: Tools</span>
@@ -56,7 +56,7 @@ const NeedsBoard = () => {
           </div>
 
           <div className="bg-indigo-600 p-5 rounded-xl text-white shadow-xl">
-            <h3 className="font-bold mb-2">🪙 Earn Points</h3>
+            <h3 className="font-bold mb-2"> Earn Points</h3>
             <p className="text-sm opacity-90 mb-4">Fulfill a request below to boost your Trust Score and earn rewards!</p>
             <div className="text-2xl font-black">+{user.points} XP</div>
           </div>
@@ -82,7 +82,7 @@ const NeedsBoard = () => {
                     </span>
                     {need.status === "Matching" && (
                       <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded animate-pulse">
-                        🔄 Matching Found
+                         Matching Found
                       </span>
                     )}
                   </div>
@@ -105,7 +105,7 @@ const NeedsBoard = () => {
                   I have this
                 </button>
                 <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">
-                  💬 Chat
+                   Chat
                 </button>
               </div>
             </div>

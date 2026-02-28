@@ -12,7 +12,7 @@ const EmergencyBoard = () => {
     <div className="max-w-2xl mx-auto space-y-6">
       <header className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
         <h1 className="text-2xl font-bold text-red-700 flex items-center gap-2">
-          🚨 Live Emergency Board
+           Live Emergency Board
         </h1>
         <p className="text-red-600 text-sm">Showing urgent needs within 2km of {location.city}</p>
       </header>
@@ -23,7 +23,7 @@ const EmergencyBoard = () => {
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-red-500">{req.type}</span>
               <h3 className="text-lg font-bold text-gray-800">{req.item}</h3>
-              <p className="text-sm text-gray-500">📍 {req.distance} away</p>
+              <p className="text-sm text-gray-500"> {req.distance} away</p>
             </div>
             <button className="bg-red-600 text-white px-6 py-2 rounded-full font-bold hover:bg-red-700 transition">
               I Can Help
