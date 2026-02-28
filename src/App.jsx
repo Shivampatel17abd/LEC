@@ -1,23 +1,30 @@
-import "./index.css"
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/common/Navbar';
+import Footer from './components/common/Footer';
+import Home from './pages/Home/Home';
+import Marketplace from './pages/Marketplace/Marketplace';
+import EmergencyBoard from './pages/Emergency/EmergencyBoard';
+import NeedsBoard from './pages/Needs/NeedsBoard';
 
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-white mb-4">
-          Tailwind + React 🚀
-        </h1>
-
-        <p className="text-gray-300 font-dm">
-          Your setup is working perfectly!
-        </p>
-
-        <button className="mt-6 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
-          Click Me
-        </button>
+    <Router>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <main className="flex-grow container mx-auto px-4 py-6">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/buy-sell" element={<Marketplace type="commercial" />} />
+            <Route path="/borrow" element={<Marketplace type="sharing" />} />
+            <Route path="/needs" element={<NeedsBoard />} />
+            <Route path="/emergency" element={<EmergencyBoard />} />
+            {/* Add more routes as you build */}
+          </Routes>
+        </main>
+        <Footer />
       </div>
-    </div>
-  )
+    </Router>
+  );
 }
 
-export default App
+export default App;
