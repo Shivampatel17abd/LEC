@@ -1,79 +1,62 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGlobalContext } from '../../context/AppContext';
 
 const Navbar = () => {
-  // Pulling global state from our Context
-  const { location, user } = useGlobalContext();
+  const { user, toggleAuthModal } = useGlobalContext();
+  const [isDashOpen, setIsDashOpen] = useState(false);
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-        
-        {/* 1. Logo & Location Group */}
-        <div className="flex items-center gap-6">
-          <Link to="/" className="text-2xl font-black text-blue-600 tracking-tight">
-            LocalLink
-          </Link>
-          
-          <div className="hidden lg:flex items-center gap-2 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-100 transition cursor-pointer">
-            <span className="text-sm font-semibold text-gray-700">
-              📍 {location.isLoaded ? location.city : "Locating..."}
-            </span>
-            <span className="text-[10px] text-blue-500 font-bold uppercase underline">Change</span>
-          </div>
-        </div>
+    <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-[90] border-b border-gray-100">
+      <div className="container mx-auto px-4 h-20 flex items-center justify-between">
+        <Link to="/" className="text-2xl font-black text-blue-600">LocalEasyConnect</Link>
 
-        {/* 2. Smart Search Bar */}
-        <div className="flex-1 max-w-xl hidden md:block">
-          <div className="relative">
-            <input 
-              type="text" 
-              placeholder="Search tools, neighbors, or shops..." 
-              className="w-full bg-gray-100 border-none px-5 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-400 transition-all outline-none text-sm"
-            />
-            <kbd className="absolute right-3 top-2.5 bg-white px-1.5 py-0.5 rounded border text-[10px] text-gray-400">
-              CTRL + K
-            </kbd>
-          </div>
-        </div>
+        <div className="flex items-center gap-4">
+          {!user.isLoggedIn ? (
+            <button 
+              onClick={() => toggleAuthModal('login')}
+              className="font-bold text-gray-700 hover:text-blue-600 px-4 py-2"
+            >
+              Login / Signup
+            </button>
+          ) : (
+            <div className="relative">
+              {/* Profile Icon (Triggers Dashboard) */}
+              <button 
+                onClick={() => setIsDashOpen(!isDashOpen)}
+                className="flex items-center gap-3 p-1.5 pr-4 bg-gray-50 rounded-full border border-gray-200 hover:border-blue-300 transition-all shadow-sm"
+              >
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-inner">
+                  {user.name[0]}
+                </div>
+                <div className="text-left hidden sm:block">
+                  <p className="text-xs font-black text-gray-900 leading-none">{user.name}</p>
+                  <p className="text-[10px] text-green-600 font-bold uppercase mt-1">🛡️ {user.trustScore}% Trust</p>
+                </div>
+              </button>
 
-        {/* 3. Actions & Profile */}
-        <div className="flex items-center gap-3 md:gap-6">
-          {/* Emergency Shortcut */}
-          <Link 
-            to="/emergency" 
-            className="flex items-center gap-1.5 text-red-600 font-bold text-sm bg-red-50 px-3 py-2 rounded-lg hover:bg-red-100 transition animate-pulse"
-          >
-            <span>🆘</span>
-            <span className="hidden sm:inline">Urgent Help</span>
-          </Link>
-
-          {/* User Trust & Profile */}
-          <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-            <div className="hidden sm:block text-right">
-              <div className="flex items-center justify-end gap-1">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Trust Score</span>
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              </div>
-              <p className="text-sm font-bold text-gray-800">{user.trustScore}%</p>
+              {/* Quick Dashboard Dropdown */}
+              {isDashOpen && (
+                <div className="absolute right-0 mt-4 w-64 bg-white rounded-[24px] shadow-2xl border border-gray-100 p-4 animate-in slide-in-from-top-2 duration-200">
+                   <div className="pb-4 mb-4 border-b border-gray-100">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Your Balance</p>
+                      <p className="text-xl font-black text-gray-900">🪙 {user.points} <span className="text-xs text-gray-400">Points</span></p>
+                   </div>
+                   <div className="space-y-1">
+                      <Link to="/profile" className="block p-3 hover:bg-blue-50 rounded-xl font-bold text-gray-700 hover:text-blue-600">My Profile</Link>
+                      <button className="w-full text-left p-3 hover:bg-blue-50 rounded-xl font-bold text-gray-700 hover:text-blue-600">My Listings</button>
+                      <button className="w-full text-left p-3 hover:bg-blue-50 rounded-xl font-bold text-gray-700 hover:text-blue-600 text-sm">Borrowing History</button>
+                      <button className="w-full text-left p-3 hover:bg-red-50 rounded-xl font-bold text-red-600 mt-2 border-t border-gray-50">Logout</button>
+                   </div>
+                </div>
+              )}
             </div>
-
-            <Link to="/profile" className="relative group">
-              <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-blue-400 text-white rounded-full flex items-center justify-center font-bold shadow-lg group-hover:scale-105 transition-transform">
-                {user.name[0]}
-              </div>
-              {/* Reward Points Badge */}
-              <span className="absolute -top-1 -right-1 bg-yellow-400 text-[10px] font-black px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm">
-                {user.points}
-              </span>
-            </Link>
-          </div>
+          )}
           
-          <button className="hidden md:block bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-700 shadow-md active:scale-95 transition-all">
+          <button className="bg-gray-900 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:shadow-xl transition-all active:scale-95">
             Post Ad
           </button>
         </div>
-
       </div>
     </nav>
   );

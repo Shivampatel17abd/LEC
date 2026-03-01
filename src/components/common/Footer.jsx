@@ -3,7 +3,7 @@ const Footer = () => {
     <footer className="bg-white border-t mt-12 py-8">
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
-          <h3 className="font-bold text-blue-600 text-lg mb-3">LocalLink</h3>
+          <h3 className="font-bold text-blue-600 text-lg mb-3">LocalEasyConnect</h3>
           <p className="text-sm text-gray-500">
             Bridging awareness and access within your local community.
           </p>
@@ -26,7 +26,7 @@ const Footer = () => {
         </div>
       </div>
       <div className="text-center mt-8 pt-8 border-t text-xs text-gray-400">
-        © 2026 LocalLink Hyperlocal Network.
+        © 2026 LocalEasyConnect Hyperlocal Network.
       </div>
     </footer>
   );
