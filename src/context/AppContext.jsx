@@ -1,77 +1,133 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { DUMMY_ITEMS } from '../data/dummyItems';
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  // 1. Location State
+
   const [location, setLocation] = useState({
-    city: "Detecting...",
+    city: localStorage.getItem('userCity') || "Local Area",
     coordinates: null,
-    isLoaded: false
+    isLoaded: localStorage.getItem('userCity') ? true : false,
+    isDetecting: false
   });
 
-  // 2. User & Reputation State
   const [user, setUser] = useState({
-    isLoggedIn: false, // Set to true to test logged-in UI
+    isLoggedIn: false,
     name: "Guest",
-    trustScore: 85, 
-    points: 120,    
+    trustScore: 85,
+    points: 120,
     badges: ["Verified Resident"]
   });
 
-  // 3. UI Modal States (No Redirection Logic)
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authView, setAuthView] = useState('login'); // 'login' or 'signup'
-  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [items, setItems] = useState(DUMMY_ITEMS);
 
-  // 4. Helper Functions to toggle UI
+  // Modal states
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authView, setAuthView]               = useState('login');
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+
+  // ── Auth modal
   const toggleAuthModal = (view = 'login') => {
     setAuthView(view);
-    setIsAuthModalOpen(!isAuthModalOpen);
+    setIsAuthModalOpen(prev => !prev);
   };
 
+  // ── Post Ad — login required
   const togglePostModal = () => {
-    // Prevent unauthenticated users from posting
     if (!user.isLoggedIn) {
-      toggleAuthModal('signup');
-    } else {
-      setIsPostModalOpen(!isPostModalOpen);
+      setAuthView('signup');
+      setIsAuthModalOpen(true);
+      return;
     }
+    setIsPostModalOpen(prev => !prev);
+  };
+
+  // ── Location modal — login required
+  const openLocationModal = () => {
+    if (!user.isLoggedIn) {
+      setAuthView('login');
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsLocationModalOpen(true);
+  };
+
+  const closeLocationModal = () => setIsLocationModalOpen(false);
+
+  // ── Update location — only if logged in
+  const updateLocation = (city) => {
+    if (!user.isLoggedIn) return;
+    setLocation(prev => ({ ...prev, city }));
+    localStorage.setItem('userCity', city);
+    setIsLocationModalOpen(false);
   };
 
   const logout = () => {
-    setUser({ isLoggedIn: false, name: "Guest", trustScore: 0, points: 0, badges: [] });
+    setUser({
+      isLoggedIn: false,
+      name: "Guest",
+      trustScore: 0,
+      points: 0,
+      badges: []
+    });
+    // Clear location on logout too
+    localStorage.removeItem('userCity');
+    setLocation({ city: "Local Area", coordinates: null, isLoaded: false, isDetecting: false });
   };
 
-  // Mock function to simulate detecting location on mount
+  // Auto-detect location (only if logged in and no saved city)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLocation({
-        city: "Indore, MP", 
-        coordinates: { lat: 22.7196, lng: 75.8577 },
-        isLoaded: true
-      });
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!user.isLoggedIn) return; // ← don't detect if not logged in
+
+    const detectLocation = () => {
+      if (!("geolocation" in navigator)) {
+        setLocation(prev => ({ ...prev, city: "Bhopal", isLoaded: true }));
+        return;
+      }
+      setLocation(prev => ({ ...prev, isDetecting: true }));
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+            );
+            const data = await response.json();
+            const detectedCity = data.address.city || data.address.town || data.address.suburb || "Local Area";
+            setLocation({ city: detectedCity, coordinates: { lat: latitude, lng: longitude }, isLoaded: true, isDetecting: false });
+            localStorage.setItem('userCity', detectedCity);
+          } catch {
+            setLocation(prev => ({ ...prev, city: "Bhopal", isLoaded: true, isDetecting: false }));
+          }
+        },
+        () => {
+          setLocation(prev => ({ ...prev, city: "Bhopal", isLoaded: true, isDetecting: false }));
+        }
+      );
+    };
+
+    if (!localStorage.getItem('userCity')) {
+      detectLocation();
+    }
+  }, [user.isLoggedIn]); // ← re-runs when login status changes
 
   return (
-    <AppContext.Provider value={{ 
-      location, 
-      setLocation, 
-      user, 
-      setUser,
-      isAuthModalOpen,
-      authView,
-      toggleAuthModal,
-      isPostModalOpen,
-      togglePostModal,
-      logout
-    }}>
+    // In AppContext.jsx — add setAuthView to the Provider value:
+<AppContext.Provider value={{
+  location, setLocation,
+  user, setUser,
+  items, setItems,
+  isAuthModalOpen, authView, setAuthView,  // ← add setAuthView here
+  toggleAuthModal,
+  isPostModalOpen, togglePostModal,
+  isLocationModalOpen, openLocationModal, closeLocationModal, updateLocation,
+  logout,
+}}>
       {children}
     </AppContext.Provider>
   );
 };
 
-// Custom hook for easy access across components
 export const useGlobalContext = () => useContext(AppContext);

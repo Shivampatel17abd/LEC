@@ -1,85 +1,209 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useGlobalContext } from '../../context/AppContext';
 import ItemCard from '../../components/cards/ItemCard';
 
+// Category pills must EXACTLY match item.type values in dummyItems
+const CATEGORIES = ['All', 'Buy/Sell', 'Rent', 'Services', 'Jobs', 'Free'];
+
+const SORT_OPTIONS = ['Newest First', 'Price: Low to High', 'Price: High to Low', 'Most Trusted'];
+
 const Home = () => {
-  const [activeTab, setActiveTab] = useState('All');
+  const { items, location, togglePostModal } = useGlobalContext();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [sortBy, setSortBy] = useState('Newest First');
 
-  // Mock Data: In real app, this comes from an API
-  const items = [
-    { id: 1, title: "Mountain Bike", price: "500/day", type: "Borrow", trustScore: 98, availability: "Available Now", category: "Sports" },
-    { id: 2, title: "Electrician - 10yr Exp", price: "200", type: "Service", trustScore: 95, availability: "Available Today", category: "Repair" },
-    { id: 3, title: "Used iPhone 13", price: "35,000", type: "Buy", trustScore: 82, availability: "Available Now", category: "Electronics" },
-    { id: 4, title: "Drill Machine", price: "Free", type: "Borrow", trustScore: 91, availability: "Out of stock", category: "Tools" },
-    { id: 5, title: "Home Made Tiffin", price: "80", type: "Service", trustScore: 89, availability: "Available Today", category: "Food" },
-    { id: 6, title: "Study Table", price: "1,200", type: "Buy", trustScore: 75, availability: "Available Now", category: "Furniture" },
-  ];
+  // ── FILTER ──
+  const filtered = (items || []).filter(item => {
+    const search = searchTerm.toLowerCase();
+    const matchSearch = !search
+      || item.title.toLowerCase().includes(search)
+      || item.desc.toLowerCase().includes(search)
+      || item.city.toLowerCase().includes(search)
+      || item.tags.some(t => t.toLowerCase().includes(search))
+      || item.owner.toLowerCase().includes(search);
 
-  const filteredItems = activeTab === 'All' 
-    ? items 
-    : items.filter(item => item.type === activeTab);
+    // 'All' shows everything; otherwise exact match on item.type
+    const matchCategory = activeCategory === 'All' || item.type === activeCategory;
+
+    return matchSearch && matchCategory;
+  });
+
+  // ── SORT ──
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'Price: Low to High') return a.price - b.price;
+    if (sortBy === 'Price: High to Low') return b.price - a.price;
+    if (sortBy === 'Most Trusted') return b.trustScore - a.trustScore;
+    return b.id - a.id; // Newest First — higher id = newer
+  });
 
   return (
-    <div className="space-y-10 pb-20">
-      {/* 1. Hero Section (Small & Clean) */}
-      <section className="relative h-64 rounded-3xl overflow-hidden bg-gradient-to-r from-blue-700 to-indigo-600 flex items-center px-8 text-white">
-        <div className="z-10 max-w-lg">
-          <h1 className="text-4xl font-black leading-tight">Everything you need, <br/> right next door.</h1>
-          <p className="mt-2 opacity-80 font-medium text-sm">Borrow, Buy, or Hire from your verified neighbors.</p>
-        </div>
-        <div className="absolute right-0 bottom-0 opacity-20 text-[150px] font-black tracking-tighter select-none">LOCAL</div>
-      </section>
+    <div style={{ minHeight: '100vh', background: '#EEF2FF', fontFamily: "'DM Sans', 'Segoe UI', sans-serif" }}>
 
-      {/* 2. Explore & Filter Section */}
-      <section>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <h2 className="text-2xl font-black text-gray-800 tracking-tight">Explore Indore</h2>
-          
-          {/* Tabs Filter */}
-          <div className="flex bg-gray-100 p-1 rounded-xl w-fit">
-            {['All', 'Borrow', 'Buy', 'Service'].map((tab) => (
+      {/* ── HERO / SEARCH ── */}
+      <section style={{
+        background: '#FFFFFF', padding: '52px 2rem 40px',
+        textAlign: 'center', borderBottom: '1px solid #C7D2FE',
+        width: '100%', boxSizing: 'border-box'
+      }}>
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h1 style={{
+            fontSize: 'clamp(26px, 4.5vw, 46px)', fontWeight: 900,
+            color: '#1E1B4B', margin: '0 0 10px', letterSpacing: '-1px', lineHeight: 1.15
+          }}>
+            Hello, What Do You Want To{' '}
+            <span style={{
+              background: 'linear-gradient(120deg, #6366F1, #8B5CF6)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+            }}>Find?</span>
+          </h1>
+          <p style={{ color: '#818CF8', fontSize: 15, marginBottom: 32, fontWeight: 500 }}>
+            Buy, sell, rent or find services around {location?.city || 'your campus'}
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          style={{ maxWidth: 640, margin: '0 auto' }}
+        >
+          {/* Search bar */}
+          <div style={{
+            display: 'flex', alignItems: 'center',
+            background: '#F5F3FF', border: '2px solid #C7D2FE',
+            borderRadius: 18, overflow: 'hidden',
+            boxShadow: '0 6px 24px rgba(99,102,241,0.12)',
+          }}>
+            <span style={{ paddingLeft: 20, fontSize: 18, color: '#818CF8', flexShrink: 0 }}>🔍</span>
+            <input
+              type="text"
+              placeholder="Search items, services, locations, tags..."
+              style={{
+                flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                padding: '14px 12px', fontSize: 15, color: '#1E1B4B', fontFamily: 'inherit'
+              }}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')} style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: '#818CF8', padding: '0 10px', fontSize: 14
+              }}>✕</button>
+            )}
+            <button style={{
+              background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+              color: '#fff', border: 'none', padding: '14px 26px',
+              fontWeight: 800, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit'
+            }}>Search</button>
+          </div>
+
+          {/* Category pills */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+            {CATEGORIES.map(cat => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-                  activeTab === tab 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {tab}
-              </button>
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                style={{
+                  padding: '7px 18px', borderRadius: 999, fontSize: 12, fontWeight: 700,
+                  cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
+                  background: activeCategory === cat
+                    ? 'linear-gradient(135deg, #6366F1, #8B5CF6)'
+                    : '#FFFFFF',
+                  color: activeCategory === cat ? '#fff' : '#4338CA',
+                  border: activeCategory === cat ? '2px solid transparent' : '2px solid #C7D2FE',
+                  boxShadow: activeCategory === cat ? '0 4px 14px rgba(99,102,241,0.3)' : 'none',
+                  transform: activeCategory === cat ? 'scale(1.05)' : 'scale(1)'
+                }}
+              >{cat}</button>
             ))}
           </div>
-        </div>
+        </motion.div>
+      </section>
 
-        {/* 3. The Grid Feed */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredItems.map((item) => (
-            <ItemCard key={item.id} item={item} />
-          ))}
-          
-          {/* Special "Post Your Own" Card */}
-          <div className="border-2 border-dashed border-gray-200 rounded-3xl flex flex-col items-center justify-center p-8 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer group">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
-              +
-            </div>
-            <p className="mt-4 font-bold text-gray-800">Got something to share?</p>
-            <p className="text-xs text-gray-400 mt-1">Help your community and earn 🪙 50 points</p>
+      {/* ── FEED ── */}
+      <main style={{ maxWidth: 1320, margin: '0 auto', padding: '32px 24px' }}>
+
+        {/* Feed header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <h2 style={{ fontWeight: 900, fontSize: 20, color: '#1E1B4B', margin: 0 }}>
+              {activeCategory === 'All' ? 'Recent Listings' : activeCategory}
+              {searchTerm && (
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#818CF8', marginLeft: 8 }}>
+                  for "{searchTerm}"
+                </span>
+              )}
+            </h2>
+            <p style={{ color: '#818CF8', fontSize: 12, marginTop: 3, fontWeight: 600 }}>
+              {sorted.length} result{sorted.length !== 1 ? 's' : ''} found
+            </p>
+          </div>
+
+          {/* Sort + active filter indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {activeCategory !== 'All' && (
+              <button
+                onClick={() => setActiveCategory('All')}
+                style={{
+                  fontSize: 12, fontWeight: 700, color: '#6366F1',
+                  background: '#EEF2FF', border: '1.5px solid #C7D2FE',
+                  borderRadius: 999, padding: '6px 12px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 4
+                }}
+              >
+                {activeCategory} ✕
+              </button>
+            )}
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              style={{
+                background: '#fff', border: '1.5px solid #C7D2FE', color: '#4338CA',
+                fontSize: 12, borderRadius: 10, padding: '9px 14px', outline: 'none',
+                fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit'
+              }}
+            >
+              {SORT_OPTIONS.map(o => <option key={o}>{o}</option>)}
+            </select>
           </div>
         </div>
-      </section>
 
-      {/* 4. Trending Categories Slider (Optional) */}
-      <section className="bg-gray-50 -mx-4 px-4 py-12 rounded-[40px]">
-        <h3 className="text-xl font-bold mb-6 px-4 text-gray-700 uppercase tracking-widest text-center">Trending Right Now</h3>
-        <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-          {['Medicine', 'Electricians', 'Plumbers', 'Car Tools', 'Tutors', 'Pet Care'].map((c) => (
-            <div key={c} className="flex-shrink-0 bg-white px-8 py-4 rounded-2xl shadow-sm border border-gray-100 font-bold text-gray-600 hover:border-blue-500 transition cursor-pointer">
-              {c}
-            </div>
-          ))}
+        {/* Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 20 }}>
+          <AnimatePresence mode="popLayout">
+            {sorted.length > 0 ? (
+              sorted.map((item, i) => (
+                <motion.div
+                  key={item.id} layout
+                  initial={{ opacity: 0, y: 22 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: Math.min(i * 0.05, 0.4) }}
+                >
+                  <ItemCard item={item} />
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                style={{ gridColumn: '1/-1', textAlign: 'center', padding: '80px 0' }}
+              >
+                <p style={{ fontSize: 52, marginBottom: 12 }}>🔍</p>
+                <p style={{ color: '#1E1B4B', fontWeight: 800, fontSize: 18 }}>No results found</p>
+                <p style={{ color: '#818CF8', fontSize: 14, marginTop: 6 }}>
+                  Try a different search or{' '}
+                  <span
+                    onClick={togglePostModal}
+                    style={{ color: '#6366F1', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                  >post what you need</span>
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </section>
+      </main>
     </div>
   );
 };

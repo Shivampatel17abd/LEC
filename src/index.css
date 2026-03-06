@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Mobile Responsive Overrides ── */
+@media (max-width: 768px) {
+
+  /* Hide desktop Navbar inside mobile shell */
+  .mobile-content > div > nav,
+  .mobile-content nav[style*="position: sticky"] {
+    display: none !important;
+  }
+
+  /* Single column card grid */
+  [style*="minmax(270px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modals fit mobile screen */
+  [style*="max-width: 780px"],
+  [style*="max-width: 680px"],
+  [style*="max-width: 640px"],
+  [style*="max-width: 520px"] {
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+}
